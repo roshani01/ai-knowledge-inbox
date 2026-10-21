@@ -70,7 +70,7 @@ async def test_query_llm_failure_handling(client: AsyncClient, mock_openai_embed
         json={
             "source_type": "note",
             "title": "Project Info",
-            "content": "Project Antigravity focuses on agentic AI capabilities.",
+            "content": "Project Apollo focuses on aerospace guidance and orbital mechanics.",
         },
     )
 
@@ -82,7 +82,7 @@ async def test_query_llm_failure_handling(client: AsyncClient, mock_openai_embed
     with patch.object(rag_service, "_get_client", return_value=mock_client):
         response = await client.post(
             "/query",
-            json={"question": "What is Project Antigravity?"},
+            json={"question": "What is Project Apollo?"},
         )
         assert response.status_code == 502
         assert "failed to generate answer" in response.json()["detail"].lower()

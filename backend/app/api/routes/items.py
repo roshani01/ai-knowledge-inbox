@@ -55,3 +55,29 @@ async def list_items(
         items=response_items,
         total=len(response_items),
     )
+
+
+@router.delete(
+    "/items/{item_id}",
+    summary="Delete a saved knowledge item",
+)
+async def delete_item(
+    item_id: str,
+    session: AsyncSession = Depends(get_db),
+):
+    """
+    Deletes a saved knowledge item and cascades deletion to all associated chunks.
+    """
+    stmt = select(KnowledgeItem).where(KnowledgeItem.id == item_id)
+    result = await session.execute(stmt)
+    item = result.scalar_one_or_none()
+    if not item:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=404,
+            detail="Knowledge item not found.",
+        )
+    await session.delete(item)
+    await session.commit()
+    return {"message": "Knowledge item deleted successfully.", "id": item_id}
+

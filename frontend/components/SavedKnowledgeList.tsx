@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { KnowledgeItem } from "@/types";
+import { api } from "@/lib/api";
 import {
   FileText,
   Globe,
@@ -13,6 +14,8 @@ import {
   Clock,
   Layers,
   Inbox,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 
 interface SavedKnowledgeListProps {
@@ -30,6 +33,12 @@ export function SavedKnowledgeList({
 }: SavedKnowledgeListProps) {
   const [filter, setFilter] = useState<"all" | "note" | "url">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredItems = items.filter((item) => {
     if (filter === "all") return true;
@@ -38,6 +47,22 @@ export function SavedKnowledgeList({
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deletingId) return;
+    if (!window.confirm("Are you sure you want to delete this saved knowledge item?")) return;
+
+    setDeletingId(id);
+    try {
+      await api.deleteItem(id);
+      onRefresh();
+    } catch (err) {
+      alert("Failed to delete item. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const formatDate = (isoStr: string) => {
@@ -171,9 +196,9 @@ export function SavedKnowledgeList({
                       </h4>
 
                       <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-zinc-500">
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1" suppressHydrationWarning>
                           <Clock className="h-3 w-3 text-zinc-400" />
-                          {formatDate(item.created_at)}
+                          {mounted ? formatDate(item.created_at) : ""}
                         </span>
 
                         <span className="text-zinc-300">•</span>
@@ -202,7 +227,7 @@ export function SavedKnowledgeList({
                     </div>
                   </div>
 
-                  {/* Status Badge */}
+                  {/* Status Badge & Actions */}
                   <div className="shrink-0 flex items-center gap-1.5">
                     <span
                       className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full border ${
@@ -226,6 +251,20 @@ export function SavedKnowledgeList({
                         <ChevronUp className="h-3.5 w-3.5" />
                       ) : (
                         <ChevronDown className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={(e) => handleDelete(item.id, e)}
+                      disabled={deletingId === item.id}
+                      className="text-zinc-400 hover:text-rose-600 p-1 transition-colors"
+                      title="Delete item"
+                      aria-label="Delete item"
+                    >
+                      {deletingId === item.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-500" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
                       )}
                     </button>
                   </div>

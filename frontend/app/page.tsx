@@ -12,6 +12,11 @@ export default function Home() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [itemsError, setItemsError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchItems = useCallback(async () => {
     setLoadingItems(true);
@@ -35,7 +40,10 @@ export default function Home() {
   }, [fetchItems]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-zinc-900 selection:bg-indigo-500 selection:text-white">
+    <div
+      suppressHydrationWarning
+      className="min-h-screen flex flex-col bg-white text-zinc-900 selection:bg-indigo-500 selection:text-white"
+    >
       {/* Top Navigation */}
       <Navbar itemCount={items.length} />
 

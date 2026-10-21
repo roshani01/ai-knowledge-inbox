@@ -43,3 +43,28 @@ async def test_list_items_ordering_and_structure(client: AsyncClient, mock_opena
     assert "preview" in first
     assert "chunk_count" in first
     assert "created_at" in first
+
+
+@pytest.mark.asyncio
+async def test_delete_item(client: AsyncClient, mock_openai_embedder):
+    # Ingest an item
+    create_res = await client.post(
+        "/ingest",
+        json={"source_type": "note", "title": "Item To Delete", "content": "Will be deleted"},
+    )
+    assert create_res.status_code in (200, 201)
+    item_id = create_res.json()["id"]
+
+    # Delete it
+    del_res = await client.delete(f"/items/{item_id}")
+    assert del_res.status_code == 200
+
+    # Ensure it's not in items list
+    list_res = await client.get("/items")
+    ids = [it["id"] for it in list_res.json()["items"]]
+    assert item_id not in ids
+
+    # Deleting again should return 404
+    del_404 = await client.delete(f"/items/{item_id}")
+    assert del_404.status_code == 404
+
